@@ -135,6 +135,22 @@ class FakeShell(cmd.Cmd):
         self.stdout.write(header)
         self.stdout.write(session_line)
 
+    def do_netstat(self, arg):
+        if 'a' not in arg or 'n' not in arg or 't' not in arg:
+            self.stdout.write("netstat: please use flags like -antp or -ant\n")
+            return
+
+        netstat_falso = """Active Internet connections (servers and established)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 0.0.0.0:80              0.0.0.0:* LISTEN      1010/nginx
+tcp        0      0 0.0.0.0:22              0.0.0.0:* LISTEN      879/sshd
+tcp        0      0 0.0.0.0:443             0.0.0.0:* LISTEN      1010/nginx
+tcp        0      0 127.0.0.1:3306          0.0.0.0:* LISTEN      954/mysqld
+tcp        0      0 127.0.0.1:6379          0.0.0.0:* LISTEN      731/redis-server
+tcp        0    364 192.168.1.101:22        192.168.1.202:54321     ESTABLISHED 1234/sshd: root
+"""
+        self.stdout.write(netstat_falso)
+
     def do_ps(self, arg):
         if arg.strip() != 'aux':
             self.stdout.write("error: unsupported arguments; please use 'ps aux'\n")
