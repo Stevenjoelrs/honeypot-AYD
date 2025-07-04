@@ -122,6 +122,9 @@ class FakeShell(cmd.Cmd):
         if nombre_archivo not in FAKE_FILESYSTEM[self.current_dir]['content']:
             FAKE_FILESYSTEM[self.current_dir]['content'].append(nombre_archivo)
 
+    def do_id(self, _):
+        self.stdout.write("uid=0(root) gid=0(root) groups=0(root)\n")
+
 class FakeSSHServer(paramiko.ServerInterface):
     def __init__(self, client_address):
         self.client_address = client_address
