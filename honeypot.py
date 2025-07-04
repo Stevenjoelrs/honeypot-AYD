@@ -2,11 +2,96 @@ import socket
 import paramiko
 import threading
 import logging
+import cmd
 
 logging.basicConfig(filename='honeypot.log', level=logging.INFO,
                     format='%(asctime)s - %(message)s')
 
 HOST_KEY = paramiko.RSAKey(filename='server.key')
+
+FAKE_FILESYSTEM = {
+    '/': {'type': 'dir', 'content': ['home', 'etc', 'var']},
+    '/home': {'type': 'dir', 'content': ['user']},
+    '/home/user': {'type': 'dir', 'content': ['password.txt', 'README']},
+    '/home/user/password.txt': {'type': 'file', 'content': 'contraseña_super_secreta_123\n'},
+    '/home/user/README': {'type': 'file', 'content': 'Este es un sistema señuelo.\n'},
+    '/etc': {'type': 'dir', 'content': ['passwd']},
+    '/etc/passwd': {'type': 'file', 'content': 'root:x:0:0:root:/root:/bin/bash\nuser:x:1000:1000::/home/user:/bin/bash\n'},
+    '/var': {'type': 'dir', 'content': ['log']},
+    '/var/log': {'type': 'dir', 'content': []}
+}
+
+class FakeShell(cmd.Cmd):
+    prompt = '$ '
+
+    def __init__(self, channel):
+        super().__init__(stdout=channel, stdin=channel)
+        self.channel = channel
+        self.current_dir = '/home/user'
+        self.user = "root"
+
+    def do_ls(self, arg):
+        path_to_list = self._get_path(arg) if arg else self.current_dir
+        node = FAKE_FILESYSTEM.get(path_to_list)
+
+        if node and node['type'] == 'dir':
+            for item in node['content']:
+                self.stdout.write(item + '\n')
+        else:
+            self.stdout.write(f"ls: no se puede acceder a '{arg}': No existe el fichero o el directorio\n")
+
+    def do_cd(self, arg):
+        if not arg: return
+        
+        new_path = self._get_path(arg)
+        if FAKE_FILESYSTEM.get(new_path, {}).get('type') == 'dir':
+            self.current_dir = new_path
+        else:
+            self.stdout.write(f"bash: cd: {arg}: No existe el fichero o el directorio\n")
+
+    def do_cat(self, arg):
+        if not arg: return
+        path = self._get_path(arg)
+        node = FAKE_FILESYSTEM.get(path)
+
+        if node and node['type'] == 'file':
+            self.stdout.write(node['content'])
+        elif node and node['type'] == 'dir':
+            self.stdout.write(f"cat: {arg}: Es un directorio\n")
+        else:
+            self.stdout.write(f"cat: {arg}: No existe el fichero o el directorio\n")
+            
+    def do_pwd(self, _):
+        self.stdout.write(self.current_dir + '\n')
+
+    def do_whoami(self, _):
+        self.stdout.write(self.user + '\n')
+
+    def do_exit(self, _):
+        self.stdout.write("logout\n")
+        self.channel.close()
+        return True 
+     
+    def default(self, line):
+        comando = line.split()[0]
+        logging.info(f"Comando desconocido ejecutado por {self.channel.getpeername()[0]}: '{line}'")
+        self.stdout.write(f"bash: {comando}: orden no encontrada\n")
+
+    def _get_path(self, path):
+        if path.startswith('/'):
+            return path
+        
+        new_path_parts = self.current_dir.split('/')
+        if self.current_dir == '/': new_path_parts = ['']
+            
+        for part in path.split('/'):
+            if part == '..':
+                if len(new_path_parts) > 1:
+                    new_path_parts.pop()
+            elif part != '.' and part != '':
+                new_path_parts.append(part)
+        
+        return '/'.join(new_path_parts) or '/'
 
 class FakeSSHServer(paramiko.ServerInterface):
     """Maneja la autenticación y los canales SSH."""
@@ -23,8 +108,9 @@ class FakeSSHServer(paramiko.ServerInterface):
         return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
     def check_channel_shell_request(self, channel):
-        channel.send("Hola!\n")
-        channel.close()
+        shell_thread = threading.Thread(target=lambda: FakeShell(channel).cmdloop())
+        shell_thread.daemon = True
+        shell_thread.start()
         return True
 
     def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight, modes):
