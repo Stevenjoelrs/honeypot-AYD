@@ -1,0 +1,53 @@
+import socket
+import paramiko
+import threading
+
+HOST_KEY = paramiko.RSAKey(filename='server.key')
+
+class FakeSSHServer(paramiko.ServerInterface):
+    """Maneja la autenticación y los canales SSH."""
+    def __init__(self, client_address):
+        self.client_address = client_address
+
+    def check_auth_password(self, username, password):
+        print(f"[!] Intento de login: {self.client_address[0]} user='{username}' pass='{password}'")
+        return paramiko.AUTH_SUCCESSFUL
+
+    def check_channel_request(self, kind, chanid):
+        if kind == 'session':
+            return paramiko.OPEN_SUCCEEDED
+        return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
+
+def start_server(port=2222):
+    """Uso de un puerto especifico"""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(('', port))
+        sock.listen(100)
+        print(f"[*] Escuchando el puerto {port}...")
+
+        while True:
+            client, addr = sock.accept()
+            print(f"[+] Nueva conexión de {addr[0]}:{addr[1]}")
+            
+        try:
+            transport = paramiko.Transport(client)
+            transport.add_server_key(HOST_KEY)
+            server = FakeSSHServer(addr)
+            transport.start_server(server=server)
+
+except paramiko.SSHException as e:
+    print(f"[-] Error de SSH: {e}")
+
+
+
+
+
+
+
+    except Exception as e:
+        print(f"[-] Error: {e}")
+
+if __name__ == "__main__":
+    start_server()
