@@ -99,8 +99,30 @@ class FakeShell(cmd.Cmd):
         else:
             self.stdout.write("Linux\n")
 
+    def do_wget(self, url):
+        if not url:
+            self.stdout.write("wget: missing URL\n")
+            return
+
+        nombre_archivo = url.split('/')[-1] or "index.html"
+        
+        logging.info(f"Intento de descarga (wget) desde {self.channel.getpeername()[0]}: {url}")
+        
+        self.stdout.write(f"--2025-07-04 16:55:37--  {url}\n")
+        self.stdout.write(f"Resolving {url.split('/')[2]}... 127.0.0.1\n")
+        self.stdout.write(f"Connecting to {url.split('/')[2]}|127.0.0.1|:80... connected.\n")
+        self.stdout.write("HTTP request sent, awaiting response... 200 OK\n")
+        self.stdout.write(f"Length: 12345 (12K) [application/octet-stream]\n")
+        self.stdout.write(f"Saving to: '{nombre_archivo}'\n\n")
+        self.stdout.write(f"{nombre_archivo}          100%[===================>]  12.06K  --.-KB/s    in 0s\n\n")
+        self.stdout.write("2025-07-04 16:55:37 (34.5 MB/s) - ‘index.html’ saved [12345/12345]\n")
+        
+        path_completo = self.current_dir + '/' + nombre_archivo
+        FAKE_FILESYSTEM[path_completo] = {'type': 'file', 'content': '[malware content]'}
+        if nombre_archivo not in FAKE_FILESYSTEM[self.current_dir]['content']:
+            FAKE_FILESYSTEM[self.current_dir]['content'].append(nombre_archivo)
+
 class FakeSSHServer(paramiko.ServerInterface):
-    """Maneja la autenticación y los canales SSH."""
     def __init__(self, client_address):
         self.client_address = client_address
 
