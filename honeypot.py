@@ -18,6 +18,14 @@ class FakeSSHServer(paramiko.ServerInterface):
             return paramiko.OPEN_SUCCEEDED
         return paramiko.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
+    def check_channel_shell_request(self, channel):
+        channel.send("Hola!\n")
+        channel.close()
+        return True
+
+    def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight, modes):
+        return True
+
 def start_server(port=2222):
     """Uso de un puerto especifico"""
     try:
