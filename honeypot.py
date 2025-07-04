@@ -31,35 +31,34 @@ class FakeSSHServer(paramiko.ServerInterface):
         return True
 
 def start_server(port=2222):
-    """Uso de un puerto especifico"""
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind(('', port))
         sock.listen(100)
-        logging.info(f"[*] Escuchando el puerto {port}...")
+        logging.info(f"[*] Servidor escuchando en el puerto {port}...")
 
         while True:
-            client, addr = sock.accept()
-            logging.info(f"[+] Nueva conexión de {addr[0]}:{addr[1]}")
-            
-        try:
-            transport = paramiko.Transport(client)
-            transport.add_server_key(HOST_KEY)
-            server = FakeSSHServer(addr)
-            transport.start_server(server=server)
+            try:
+                client, addr = sock.accept()
+                logging.info(f"[+] Nueva conexión de {addr[0]}:{addr[1]}")
+                
+                transport = paramiko.Transport(client)
+                transport.add_server_key(HOST_KEY)
+                server = FakeSSHServer(addr)
+                
+                handler_thread = threading.Thread(
+                    target=transport.start_server, 
+                    args=(server,)
+                )
+                handler_thread.daemon = True
+                handler_thread.start()
 
-except paramiko.SSHException as e:
-    logging.error(f"[-] Error de SSH: {e}")
-
-
-
-
-
-
+            except Exception as e:
+                logging.error(f"[-] Error al manejar conexión: {e}")
 
     except Exception as e:
-        logging.error(f"[-] Error: {e}")
+        logging.error(f"[-] Error fatal al iniciar el servidor: {e}")
 
 if __name__ == "__main__":
     start_server()
