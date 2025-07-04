@@ -93,6 +93,12 @@ class FakeShell(cmd.Cmd):
         
         return '/'.join(new_path_parts) or '/'
 
+    def do_uname(self, arg):
+        if arg == '-a':
+            self.stdout.write("Linux arch-server 6.8.9-arch1-1 #1 SMP PREEMPT_DYNAMIC Tue, 27 Jun 2025 18:54:32 +0000 x86_64 GNU/Linux\n")
+        else:
+            self.stdout.write("Linux\n")
+
 class FakeSSHServer(paramiko.ServerInterface):
     """Maneja la autenticación y los canales SSH."""
     def __init__(self, client_address):
