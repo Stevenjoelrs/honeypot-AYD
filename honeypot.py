@@ -125,6 +125,15 @@ class FakeShell(cmd.Cmd):
     def do_id(self, _):
         self.stdout.write("uid=0(root) gid=0(root) groups=0(root)\n")
 
+    def do_w(self, _):
+        attacker_ip = self.channel.getpeername()[0]
+        from datetime import datetime
+        login_time = datetime.now().strftime("%H:%M")
+        header = " USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT\n"
+        session_line = f" root     pts/0    {attacker_ip:<16} {login_time}    0.00s  0.02s  0.00s w\n"        
+        self.stdout.write(header)
+        self.stdout.write(session_line)
+
 class FakeSSHServer(paramiko.ServerInterface):
     def __init__(self, client_address):
         self.client_address = client_address
