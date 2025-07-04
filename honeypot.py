@@ -134,6 +134,35 @@ class FakeShell(cmd.Cmd):
         self.stdout.write(header)
         self.stdout.write(session_line)
 
+    def do_ps(self, arg):
+        if arg.strip() != 'aux':
+            self.stdout.write("error: unsupported arguments; please use 'ps aux'\n")
+            return
+            
+        procesos_falsos = procesos_falsos = """USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root           1  0.0  0.1  22276 13288 ?        Ss   17:38   0:01 /sbin/init
+root           2  0.0  0.0      0     0 ?        S    17:38   0:00 [kthreadd]
+root           3  0.0  0.0      0     0 ?        I<   17:38   0:00 [rcu_gp]
+root           4  0.0  0.0      0     0 ?        I<   17:38   0:00 [rcu_par_gp]
+root           6  0.0  0.0      0     0 ?        I<   17:38   0:00 [kworker/0:0H-kblockd]
+root           9  0.0  0.0      0     0 ?        I<   17:38   0:00 [mm_percpu_wq]
+root         115  0.0  0.0      0     0 ?        S    17:38   0:00 [kswapd0]
+root         268  0.0  0.2  73212 37404 ?        Ss   17:38   0:00 /usr/lib/systemd/systemd-journald
+systemd+     376  0.0  0.0  89900  7552 ?        Ssl  17:38   0:00 /usr/lib/systemd/systemd-timesyncd
+root         383  0.0  0.0  36128  9984 ?        Ss   17:38   0:00 /usr/lib/systemd/systemd-udevd
+dbus         549  0.0  0.0   8496  3996 ?        Ss   17:38   0:00 /usr/bin/dbus-broker-launch --scope system
+dbus         550  0.0  0.0   7804  3248 ?        S    17:38   0:01 dbus-broker --log 4 --controller 9
+root         551  0.0  0.1 416740 24928 ?        Ssl  17:38   0:01 /usr/bin/NetworkManager --no-daemon
+root         553  0.0  0.0  10084  5300 ?        Ss   17:38   0:00 /usr/lib/bluetooth/bluetoothd
+root         554  0.0  0.1  16080  7740 ?        Ss   17:38   0:00 /usr/lib/systemd/systemd-logind
+root         658  0.0  0.0  17040 10540 ?        Ss   17:38   0:00 /usr/bin/wpa_supplicant -u -s -O /run/wpa_supplicant
+root         879  0.0  0.1  84344  8188 ?        Ss   17:39   0:01 /usr/bin/sshd -D
+root        1234  0.0  0.2 105992 10112 ?        Ss   18:05   0:00 sshd: root@pts/0
+root        1235  0.0  0.1  14888  5884 pts/0    Ss   18:05   0:00 -bash
+root        1256  0.0  0.0  16344  3512 pts/0    R+   18:07   0:00 ps aux
+"""
+        self.stdout.write(procesos_falsos)
+
 class FakeSSHServer(paramiko.ServerInterface):
     def __init__(self, client_address):
         self.client_address = client_address
