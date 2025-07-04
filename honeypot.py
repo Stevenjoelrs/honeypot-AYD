@@ -15,8 +15,9 @@ FAKE_FILESYSTEM = {
     '/home/user': {'type': 'dir', 'content': ['password.txt', 'README']},
     '/home/user/password.txt': {'type': 'file', 'content': 'contraseña_super_secreta_123\n'},
     '/home/user/README': {'type': 'file', 'content': 'Este es un sistema señuelo.\n'},
-    '/etc': {'type': 'dir', 'content': ['passwd']},
+    '/etc': {'type': 'dir', 'content': ['passwd', 'os-release']},
     '/etc/passwd': {'type': 'file', 'content': 'root:x:0:0:root:/root:/bin/bash\nuser:x:1000:1000::/home/user:/bin/bash\n'},
+    '/etc/os-release': {'type': 'file', 'content': 'NAME="Arch Linux"\nPRETTY_NAME="Arch Linux"\nID=arch\nBUILD_ID=rolling\nANSI_COLOR="38;2;23;147;209"\nHOME_URL="https://archlinux.org/"\nDOCUMENTATION_URL="https://wiki.archlinux.org/"\nSUPPORT_URL="https://bbs.archlinux.org/"\nBUG_REPORT_URL="https://bugs.archlinux.org/"\nLOGO=archlinux-logo\n'},
     '/var': {'type': 'dir', 'content': ['log']},
     '/var/log': {'type': 'dir', 'content': []}
 }
