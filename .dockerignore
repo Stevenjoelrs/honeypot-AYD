@@ -1,0 +1,12 @@
+.git
+.gitignore
+
+.dockerignore
+
+server.key
+honeypot.log
+README.md
+
+__pycache__
+venv
+.env
